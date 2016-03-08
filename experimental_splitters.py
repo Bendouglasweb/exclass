@@ -17,11 +17,11 @@ print("\n *** *** *** *** NEW FILE OPEN *** *** *** *** \n",file=data_file)
 data_file.flush()
 os.fsync(data_file)
 
-MAXK = 4
-#FILES = {"spambase.csv","humanbot.csv"}
-FILES = {"humanbot.csv","spambase.csv"}
-#FILES = {"humanbot.csv"}
-#FILES = {"spambase.csv"}
+MAXK = 21
+
+FILES = {"datasets/kdd10_2","datasets/humanbot.csv","datasets/spambase.csv","datasets/breast_cancer.csv","datasets/credit.csv","datasets/digits08.csv","datasets/qsar.csv","datasets/sonar.csv","datasets/theorem.csv"}
+#FILES = {"datasets/humanbot.csv","datasets/spambase.csv","datasets/breast_cancer.csv","datasets/credit.csv","datasets/digits08.csv","datasets/qsar.csv","datasets/sonar.csv","datasets/theorem.csv"}
+
 
 for file_value in FILES:
     print("\nStarting analysis for file: %s\n" % file_value)
@@ -49,81 +49,109 @@ for file_value in FILES:
     yx = sorted(yx,key=lambda x: x[0],reverse=True)
 
 
-    for randop in range(5):
-        print("\nRand iteration: %s\n" % randop)
-        print("\nRand iteration: %s\n" % randop,file=data_file)
+
+
+    # # testops:
+    #     0: This is sorting by KBest, using all elements evenly
+    #     1: This is using Ben's algorithm with KBest
+    #     2: This is using all elements evenly, but randomly sorted | 2 iterations
+    #     3: Second iteration of 2
+    #     4: This is using Ben's algorithm with random sorting | 2 iterations
+    #     5: Second iteration of 4
+
+    # This loop/testop loops through the various options for our tests
+    for testop in range(6):
+        print("\nTest iteration: %s\n" % testop)
+        print("\nTest iteration: %s\n" % testop,file=data_file)
         data_file.flush()
         os.fsync(data_file)
-        if randop != 0:
-            random.shuffle(yx)
-        print("\nyx: %s\n" % yx,file=data_file)
 
-        for op in range(9):
+        # For testop 2 and greater, shuffle the order of elements
+        if testop >= 2:
+            random.shuffle(yx)
+
+
+        #    random.shuffle(yx)
+        print("\nyx: %s\n" % yx,file=data_file)
+        data_file.flush()
+        os.fsync(data_file)
+
+        for op in range(2):
             print("\n----- SVM_LINEAR Op: %s --\n" % op,file=data_file)
             data_file.flush()
             os.fsync(data_file)
             results = {}
-            print("Starting Sim for KBest w/ SVM_LINEAR Op=%s.\nKs completed:" % op,end="")
+            print("\nStarting Sim SVM_LINEAR Op=%s\n" % op,)
 
 
 
             start_time = timeit.default_timer()
             for K in range(1,MAXK):
                 print("----%s----" % K)
-
                 data_file.flush()
                 os.fsync(data_file)
+
                 attribute_list={}
                 remaining = []
                 results[K] = []
 
-                for i, value in enumerate(yx):
-                    if i%K not in attribute_list:
-                        attribute_list[i%K]=[]
-                    if i < K:
+                # Get attribute list ready for each of the options:
+
+                if testop in {0,2,3}:       # We want them all split evenly here
+                    for i, value in enumerate(yx):
+                        if i%K not in attribute_list:
+                            attribute_list[i%K]=[]
                         attribute_list[i%K].append(value[1])
-                    else:
-                        remaining.append(value[1])
+                elif testop in {1,4,5}:     # Here we just want the first set, then the rest put into remaining
+                    # Populate attribute_list and remaining
+                    for i, value in enumerate(yx):
+                        if i%K not in attribute_list:
+                            attribute_list[i%K]=[]
+                        if i < K:
+                            attribute_list[i%K].append(value[1])
+                        else:
+                            remaining.append(value[1])
 
+                    # Now, we need to run through Ben's algorithm to determine if we want to use any from remaining
+                    holding = [-1,0]     # K, K diff
+                    seen = []
+                    for rem in remaining:
+                        for i,val in attribute_list.items():
+                            # Get current accuracy
+                            attributes=sorted(val)
+                            new_X=[[sample[j] for j in attributes] for sample in X]
+                            model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
+                            res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
+                            old_acc = res['metric']
 
-                holding = [-1,0]     # K, K diff
-                seen = []
-                for rem in remaining:
-                    for i,val in attribute_list.items():
-                        # Get current accuracy
-                        attributes=sorted(val)
-                        new_X=[[sample[j] for j in attributes] for sample in X]
-                        model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
-                        res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
-                        old_acc = res['metric']
+                            # Get accuracy with new element
+                            attributes.append(rem)
+                            new_X=[[sample[j] for j in attributes] for sample in X]
+                            model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
+                            res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
+                            new_acc = res['metric']
 
-                        # Get accuracy with new element
-                        attributes.append(rem)
-                        new_X=[[sample[j] for j in attributes] for sample in X]
-                        model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
-                        res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
-                        new_acc = res['metric']
+                            diff = new_acc - old_acc
 
-                        diff = new_acc - old_acc
+                            # If this one has a greater difference then any previous one, set it
+                            if diff > holding[1]:
+                                holding[0] = i
+                                holding[1] = diff
 
-                        if diff > holding[1]:
-                            holding[0] = i
-                            holding[1] = diff
+                            #print("i: %s, val: %s, \t\t\trem: %s, diff: %s, holding: %s, %s. old/new = %s-%s" % (i,val,rem,diff,holding[0],holding[1],old_acc,new_acc))
 
-                        #print("i: %s, val: %s, \t\t\trem: %s, diff: %s, holding: %s, %s. old/new = %s-%s" % (i,val,rem,diff,holding[0],holding[1],old_acc,new_acc))
+                        if holding[0] > 0:  # if this was less than 0, then nothing saw a benefit from the additional attribute
+                            attribute_list[holding[0]].append(rem)
+                        else:
+                            if rem not in seen:
+                                remaining.append(rem)
 
-                    if holding[0] > 0:
-                        attribute_list[holding[0]].append(rem)
-                    else:
-                        if rem not in seen:
-                            remaining.append(rem)
-
-                    seen.append(rem)
-                    holding = [-1,0]
+                        seen.append(rem)
+                        holding = [-1,0]
 
 
                 print("  Att: %s" % (attribute_list))
-                print("  Att: %s" % (attribute_list),file=data_file)
+                print("Attribute list: %s" % (attribute_list),file=data_file)
                 data_file.flush()
                 os.fsync(data_file)
                 for i,val in attribute_list.items():
@@ -145,9 +173,15 @@ for file_value in FILES:
             os.fsync(data_file)
             #pprint.pprint(results)
             print("------")
+            print("{K,Avg,StD,Max,Min,Swing)",file=data_file)
+            data_file.flush()
+            os.fsync(data_file)
             for K in range (1,MAXK):
-                print("K: %s, Avg: %s" % (K,sum(results[K]) / float(len(results[K]))))
-                print("%s,%s" % (K,sum(results[K]) / float(len(results[K]))),file=data_file)
+
+
+                print("(K:%s) Avg: %.5f, StD: %.5f, Max: %.5f, Min: %.5f, Swing: %.5f" % (K,sum(results[K]) / float(len(results[K])),np.std(results[K]),np.amax(results[K]),np.amin(results[K]),np.max(results[K]) - np.amin(results[K])))
+                print("%s,%.5f,%.5f,%.5f,%.5f,%.5f" % (K,sum(results[K]) / float(len(results[K])),np.std(results[K]),np.amax(results[K]),np.amin(results[K]),np.max(results[K]) - np.amin(results[K])),file=data_file)
+
                 data_file.flush()
                 os.fsync(data_file)
 

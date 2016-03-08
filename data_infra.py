@@ -33,30 +33,38 @@ def SplitTrainAndTest(train_ratio, X, Y):
 def TrainModel(X, Y, model_type='SVM_LINEAR',op=0,n_features=0):
     if model_type == SVM_LINEAR_MODEL:
         if op == 0:
-            model = svm.SVC(kernel='linear')
-        elif op == 1:
             model = svm.LinearSVC()
-        elif op == 2:
+        elif op == 1:
             model = svm.SVC(kernel='rbf')
-        elif op == 3:
-            model = svm.SVC(kernel='rbf',gamma=2/n_features)
-        elif op == 4:
-            model = svm.SVC(kernel='rbf',gamma=1/(2*n_features))
-        elif op == 5:
-            model = svm.SVC(kernel='poly',degree=2)
-        elif op == 6:
-            model = svm.SVC(kernel='poly',degree=3)
-        elif op == 7:
-            model = svm.SVC(kernel='poly',degree=5)
-        elif op == 8:
-            model = svm.SVC(kernel='poly',degree=6)
 
-    #elif model_type=='SVM_NONLINEAR':
-	#    model=#add function for non linear
     model.fit(X, Y)
 
     return model
 
+# def TrainModel(X, Y, model_type='SVM_LINEAR',op=0,n_features=0):
+#     if model_type == SVM_LINEAR_MODEL:
+#         if op == 0:
+#             model = svm.SVC(kernel='linear')
+#         elif op == 1:
+#             model = svm.LinearSVC()
+#         elif op == 2:
+#             model = svm.SVC(kernel='rbf')
+#         elif op == 3:
+#             model = svm.SVC(kernel='rbf',gamma=2/n_features)
+#         elif op == 4:
+#             model = svm.SVC(kernel='rbf',gamma=1/(2*n_features))
+#         elif op == 5:
+#             model = svm.SVC(kernel='poly',degree=2)
+#         elif op == 6:
+#             model = svm.SVC(kernel='poly',degree=3)
+#         elif op == 7:
+#             model = svm.SVC(kernel='poly',degree=5)
+#         elif op == 8:
+#             model = svm.SVC(kernel='poly',degree=6)
+#
+#     model.fit(X, Y)
+#
+#     return model
 
 def ComputePerf(Y_actual, Y_pred):
     conf_matrix = sklearn.metrics.confusion_matrix(Y_actual, Y_pred)
