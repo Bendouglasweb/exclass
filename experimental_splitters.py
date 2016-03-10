@@ -25,6 +25,7 @@ MAXK = 21
 #FILES = {"datasets/kdd10_2","datasets/humanbot.csv","datasets/spambase.csv","datasets/breast_cancer.csv","datasets/credit.csv","datasets/digits08.csv","datasets/qsar.csv","datasets/sonar.csv","datasets/theorem.csv"}
 #FILES = {"datasets/humanbot.csv","datasets/spambase.csv","datasets/breast_cancer.csv","datasets/credit.csv","datasets/digits08.csv","datasets/qsar.csv","datasets/sonar.csv","datasets/theorem.csv"}
 FILES = {"datasets/kdd10_2","datasets/spambase.csv","datasets/sonar.csv"}
+#FILES = {"datasets/kdd10_2","datasets/spambase.csv","datasets/sonar.csv"}
 
 # Loop through each file and perform all subsequent testing
 for file_value in FILES:
@@ -64,7 +65,7 @@ for file_value in FILES:
     #     5: Second iteration of 4
     for testop in range(6):
 
-        if testop != 0 or testop != 2 or testop != 3:
+        if testop == 0 or testop != 2 or testop != 3:
             print("Skipping iteration %s, continuing on to the next!" % testop)
             print("Skipping iteration %s, continuing on to the next!" % testop,file=data_file)
             data_file.flush()
@@ -88,6 +89,12 @@ for file_value in FILES:
         # this op variable is used to iterate through the classification options, as defined in the
         # TrainModel method within data_infra.
         for op in range(2):
+
+            if op == 1:
+                print("\nSkipping op 1\n")
+                print("\nSkipping op 1\n",file=data_file)
+                continue
+
             print("\n----- SVM_LINEAR Op: %s --\n" % op)
             print("\n----- SVM_LINEAR Op: %s --\n" % op,file=data_file)
             data_file.flush()
