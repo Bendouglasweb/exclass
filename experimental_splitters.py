@@ -1,8 +1,9 @@
 import data_infra
 import numpy as np
-import pprint
 from sklearn.feature_selection import SelectKBest, chi2
 import math
+
+import pprint
 import time
 from sklearn.ensemble import ExtraTreesClassifier
 
@@ -11,18 +12,21 @@ import timeit
 import random
 import os
 
-data_file = open('Results', 'a')
+data_file = open('Results-2', 'a')
 
 print("\n *** *** *** *** NEW FILE OPEN *** *** *** *** \n",file=data_file)
 data_file.flush()
 os.fsync(data_file)
 
+# Max K defines the maximum number of K-groupings to loop to
 MAXK = 21
 
-FILES = {"datasets/kdd10_2","datasets/humanbot.csv","datasets/spambase.csv","datasets/breast_cancer.csv","datasets/credit.csv","datasets/digits08.csv","datasets/qsar.csv","datasets/sonar.csv","datasets/theorem.csv"}
+# Files is a list of files to run the experiment on
+#FILES = {"datasets/kdd10_2","datasets/humanbot.csv","datasets/spambase.csv","datasets/breast_cancer.csv","datasets/credit.csv","datasets/digits08.csv","datasets/qsar.csv","datasets/sonar.csv","datasets/theorem.csv"}
 #FILES = {"datasets/humanbot.csv","datasets/spambase.csv","datasets/breast_cancer.csv","datasets/credit.csv","datasets/digits08.csv","datasets/qsar.csv","datasets/sonar.csv","datasets/theorem.csv"}
+FILES = {"datasets/kdd10_2","datasets/spambase.csv","datasets/sonar.csv"}
 
-
+# Loop through each file and perform all subsequent testing
 for file_value in FILES:
     print("\nStarting analysis for file: %s\n" % file_value)
     print("\n--------------- Starting analysis for file: %s\n" % file_value,file=data_file)
@@ -37,30 +41,37 @@ for file_value in FILES:
     data_file.flush()
     os.fsync(data_file)
 
-    # -------------- SELECT K BEST --------------
+
+    # ---- Do SelectKBest to organize features by impact, saves into yx sorted, descending
     selection=SelectKBest(k=10)
     model=selection.fit(X,Y)
     x=[i for i in range(len(X[0]))]
-
     scores=model.scores_
     scores=[i if not math.isnan(i) else 0 for i in scores]
     yx=zip(scores,x)
-    #yx.sort(reverse=True)
     yx = sorted(yx,key=lambda x: x[0],reverse=True)
 
 
 
+    # This loop/testop loops through the various options for our tests
 
     # # testops:
-    #     0: This is sorting by KBest, using all elements evenly
+    #     0: This is sorting by KBest, using all elements evenly split
     #     1: This is using Ben's algorithm with KBest
     #     2: This is using all elements evenly, but randomly sorted | 2 iterations
     #     3: Second iteration of 2
     #     4: This is using Ben's algorithm with random sorting | 2 iterations
     #     5: Second iteration of 4
-
-    # This loop/testop loops through the various options for our tests
     for testop in range(6):
+
+        if testop != 0 or testop != 2 or testop != 3:
+            print("Skipping iteration %s, continuing on to the next!" % testop)
+            print("Skipping iteration %s, continuing on to the next!" % testop,file=data_file)
+            data_file.flush()
+            os.fsync(data_file)
+            continue
+
+
         print("\nTest iteration: %s\n" % testop)
         print("\nTest iteration: %s\n" % testop,file=data_file)
         data_file.flush()
@@ -70,29 +81,30 @@ for file_value in FILES:
         if testop >= 2:
             random.shuffle(yx)
 
-
-        #    random.shuffle(yx)
         print("\nyx: %s\n" % yx,file=data_file)
         data_file.flush()
         os.fsync(data_file)
 
+        # this op variable is used to iterate through the classification options, as defined in the
+        # TrainModel method within data_infra.
         for op in range(2):
+            print("\n----- SVM_LINEAR Op: %s --\n" % op)
             print("\n----- SVM_LINEAR Op: %s --\n" % op,file=data_file)
             data_file.flush()
             os.fsync(data_file)
+
             results = {}
-            print("\nStarting Sim SVM_LINEAR Op=%s\n" % op,)
 
+            start_time = timeit.default_timer() # Used for run time
 
-
-            start_time = timeit.default_timer()
+            # Loops through all K groupings
             for K in range(1,MAXK):
                 print("----%s----" % K)
                 data_file.flush()
                 os.fsync(data_file)
 
-                attribute_list={}
-                remaining = []
+                attribute_list={}       # Used to hold column numbers for features to be used for each group
+                remaining = []          # 
                 results[K] = []
 
                 # Get attribute list ready for each of the options:
