@@ -65,7 +65,7 @@ for file_value in FILES:
     #     5: Second iteration of 4
     for testop in range(6):
 
-        if testop == 0 or testop != 2 or testop != 3:
+        if testop == 1 or testop == 3 or testop == 4:
             print("Skipping iteration %s, continuing on to the next!" % testop)
             print("Skipping iteration %s, continuing on to the next!" % testop,file=data_file)
             data_file.flush()
