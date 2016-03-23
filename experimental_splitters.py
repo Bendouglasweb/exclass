@@ -12,8 +12,8 @@ import timeit
 import random
 import os
 
-data_file = open('Results-23', 'a')
-data_file_nv = open('Results-23-nv', 'a')    # "Non-verbose". Only logs final results to file
+data_file = open('Results-23_2', 'a')
+data_file_nv = open('Results-23_2-nv', 'a')    # "Non-verbose". Only logs final results to file
 
 print("\n *** *** *** *** NEW FILE OPEN *** *** *** *** \n",file=data_file)
 data_file.flush()
@@ -31,11 +31,12 @@ VERBOSELOGGING = True
 
 # Files is a list of files to run the experiment on
 #FILES = {"datasets/kdd10_2","datasets/humanbot.csv","datasets/spambase.csv","datasets/breast_cancer.csv","datasets/credit.csv","datasets/digits08.csv","datasets/qsar.csv","datasets/sonar.csv","datasets/theorem.csv"}
-FILES = {"datasets/humanbot.csv","datasets/spambase.csv","datasets/breast_cancer.csv","datasets/credit.csv","datasets/digits08.csv","datasets/qsar.csv","datasets/sonar.csv","datasets/theorem.csv"}
+FILES = {"datasets/humanbot.csv","datasets/breast_cancer.csv","datasets/credit.csv","datasets/digits08.csv","datasets/qsar.csv","datasets/sonar.csv","datasets/theorem.csv"}
+#FILES = {"datasets/humanbot.csv","datasets/spambase.csv","datasets/breast_cancer.csv","datasets/credit.csv","datasets/digits08.csv","datasets/qsar.csv","datasets/sonar.csv","datasets/theorem.csv"}
 #FILES = {"datasets/breast_cancer.csv","datasets/digits08.csv","datasets/qsar.csv"}
 #FILES = {"datasets/qsar.csv"}
 
-
+TOTALSVMS = 0
 
 #FILES = {"datasets/kdd10_2","datasets/spambase.csv","datasets/sonar.csv"}
 
@@ -180,6 +181,7 @@ for file_value in FILES:
                             model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
                             res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
                             old_acc = res['metric']
+                            TOTALSVMS = TOTALSVMS + 1
 
                             # Get accuracy with new element
                             attributes.append(rem)
@@ -187,6 +189,7 @@ for file_value in FILES:
                             model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
                             res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
                             new_acc = res['metric']
+                            TOTALSVMS = TOTALSVMS + 1
 
                             diff = new_acc - old_acc
 
@@ -231,6 +234,7 @@ for file_value in FILES:
                             model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
                             res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
                             old_acc = res['metric']
+                            TOTALSVMS = TOTALSVMS + 1
 
                             # Get accuracy with new element
                             attributes.append(rem)
@@ -238,6 +242,7 @@ for file_value in FILES:
                             model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
                             res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
                             new_acc = res['metric']
+                            TOTALSVMS = TOTALSVMS + 1
 
                             diff = new_acc - old_acc
 
@@ -271,6 +276,7 @@ for file_value in FILES:
                         model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
                         res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
                         tempresults.append(res['metric'])
+                        TOTALSVMS = TOTALSVMS + 1
 
                     #print("tempresults: %s, with min being %s" % (tempresults,np.argmin(tempresults)))
 
@@ -296,6 +302,7 @@ for file_value in FILES:
                             model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
                             res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
                             old_acc = res['metric']
+                            TOTALSVMS = TOTALSVMS + 1
 
                             # Get accuracy with new element
                             attributes.append(rem2)
@@ -303,6 +310,7 @@ for file_value in FILES:
                             model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
                             res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
                             new_acc = res['metric']
+                            TOTALSVMS = TOTALSVMS + 1
 
                             diff = new_acc - old_acc
 
@@ -357,6 +365,7 @@ for file_value in FILES:
                             model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
                             res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
                             old_acc = res['metric']
+                            TOTALSVMS = TOTALSVMS + 1
 
                             # Get accuracy with new element
                             attributes.append(rem)
@@ -364,6 +373,7 @@ for file_value in FILES:
                             model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
                             res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
                             new_acc = res['metric']
+                            TOTALSVMS = TOTALSVMS + 1
 
                             diff = new_acc - old_acc
 
@@ -397,6 +407,7 @@ for file_value in FILES:
                         model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
                         res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
                         tempresults.append(res['metric'])
+                        TOTALSVMS = TOTALSVMS + 1
 
                     #print("tempresults: %s, with min being %s" % (tempresults,np.argmin(tempresults)))
 
@@ -422,6 +433,7 @@ for file_value in FILES:
                             model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
                             res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
                             old_acc = res['metric']
+                            TOTALSVMS = TOTALSVMS + 1
 
                             # Get accuracy with new element
                             attributes.append(rem2)
@@ -429,6 +441,7 @@ for file_value in FILES:
                             model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
                             res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
                             new_acc = res['metric']
+                            TOTALSVMS = TOTALSVMS + 1
 
                             diff = new_acc - old_acc
 
@@ -501,12 +514,14 @@ for file_value in FILES:
                                 model=data_infra.TrainModel(t_new_X,Y,"SVM_LINEAR",op,n_features)
                                 res = (data_infra.ComputePerf(data_infra.PredictModel(model,t_new_X),Y))
                                 old_acc = res['metric']
+                                TOTALSVMS = TOTALSVMS + 1
 
                                 # Get accuracy without low scoring element
                                 t_new_X=[[sample[k] for k in tempa] for sample in X]
                                 model=data_infra.TrainModel(t_new_X,Y,"SVM_LINEAR",op,n_features)
                                 res = (data_infra.ComputePerf(data_infra.PredictModel(model,t_new_X),Y))
                                 new_acc = res['metric']
+                                TOTALSVMS = TOTALSVMS + 1
 
                                 diff = new_acc - old_acc
                                 # print("%s  " % diff,end="")
@@ -537,6 +552,7 @@ for file_value in FILES:
                             model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
                             res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
                             old_acc = res['metric']
+                            TOTALSVMS = TOTALSVMS + 1
 
                             # Get accuracy with new element
                             attributes.append(rem3)
@@ -544,6 +560,7 @@ for file_value in FILES:
                             model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
                             res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
                             new_acc = res['metric']
+                            TOTALSVMS = TOTALSVMS + 1
 
                             diff = new_acc - old_acc
 
@@ -583,6 +600,7 @@ for file_value in FILES:
                     model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
                     res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
                     results[K].append(res['metric'])
+                    TOTALSVMS = TOTALSVMS + 1
 
                 #print(results[K])
                 sys.stdout.flush()  # Was needed to get it to actually print
@@ -637,4 +655,12 @@ for file_value in FILES:
 
     # -------------- END SELECT K BEST --------------
 
+print("\nTotal SVMs: \n" % TOTALSVMS,file=data_file)
+data_file.flush()
+os.fsync(data_file)
+print("\nTotal SVMs: \n" % TOTALSVMS,file=data_file_nv)
+data_file_nv.flush()
+os.fsync(data_file_nv)
+
 data_file.close()
+data_file_nv.close()
