@@ -21,6 +21,8 @@ def ReadFromFile(filename,shuffle=None):
     return X, Y
 
 
+
+
 def SplitTrainAndTest(train_ratio, X, Y):
     train_size = int(len(Y) * train_ratio)
     X_train = X[:train_size]
