@@ -12,8 +12,8 @@ import timeit
 import random
 import os
 
-data_file = open('Results-23_2', 'a')
-data_file_nv = open('Results-23_2-nv', 'a')    # "Non-verbose". Only logs final results to file
+data_file = open('Results-4_6', 'a')
+data_file_nv = open('Results-4_6-nv', 'a')    # "Non-verbose". Only logs final results to file
 
 print("\n *** *** *** *** NEW FILE OPEN *** *** *** *** \n",file=data_file)
 data_file.flush()
@@ -26,12 +26,16 @@ os.fsync(data_file_nv)
 # Max K defines the maximum number of K-groupings to loop to
 MAXK = 13
 
+# KFold determines how many groupings we split the data into for train/test purposes
+# We train with k-1 groups, test against the remaining
+KFOLD = 5
+
 # Verbose logging includes each groupings individual columns and each groupings individual training score
 VERBOSELOGGING = True
 
 # Files is a list of files to run the experiment on
-#FILES = {"datasets/kdd10_2","datasets/humanbot.csv","datasets/spambase.csv","datasets/breast_cancer.csv","datasets/credit.csv","datasets/digits08.csv","datasets/qsar.csv","datasets/sonar.csv","datasets/theorem.csv"}
-FILES = {"datasets/humanbot.csv","datasets/breast_cancer.csv","datasets/credit.csv","datasets/digits08.csv","datasets/qsar.csv","datasets/sonar.csv","datasets/theorem.csv"}
+FILES = {"datasets/kdd10_2","datasets/humanbot.csv","datasets/spambase.csv","datasets/breast_cancer.csv","datasets/credit.csv","datasets/digits08.csv","datasets/qsar.csv","datasets/sonar.csv","datasets/theorem.csv"}
+#FILES = {"datasets/humanbot.csv","datasets/breast_cancer.csv","datasets/credit.csv","datasets/digits08.csv","datasets/qsar.csv","datasets/sonar.csv","datasets/theorem.csv"}
 #FILES = {"datasets/humanbot.csv","datasets/spambase.csv","datasets/breast_cancer.csv","datasets/credit.csv","datasets/digits08.csv","datasets/qsar.csv","datasets/sonar.csv","datasets/theorem.csv"}
 #FILES = {"datasets/breast_cancer.csv","datasets/digits08.csv","datasets/qsar.csv"}
 #FILES = {"datasets/qsar.csv"}
@@ -46,9 +50,15 @@ for file_value in FILES:
     print("\n--------------- Starting analysis for file: %s\n" % file_value,file=data_file)
     data_file.flush()
     os.fsync(data_file)
+    print("\n--------------- Starting analysis for file: %s\n" % file_value,file=data_file_nv)
+    data_file_nv.flush()
+    os.fsync(data_file_nv)
     FILENAME=file_value
     [X,Y]=data_infra.ReadFromFile(FILENAME, shuffle=True)
+
     n_features = len(X[0])
+    n_tuples = len(X)
+    kfold_n_tuples = np.floor(n_tuples/KFOLD)      # number of tuples per KFold
 
     print("Num features in file: %s" % n_features)
     print("Num features in file: %s" % n_features,file=data_file)
@@ -72,14 +82,6 @@ for file_value in FILES:
 
     # This loop/testop loops through the various options for our tests
 
-    # # testops:
-    #     0: This is sorting by KBest, using all elements evenly split
-    #     1: This is using Ben's algorithm with KBest
-    #     2: This is using all elements evenly, but randomly sorted | 2 iterations
-    #     3: Second iteration of 2
-    #     4: This is using Ben's algorithm with random sorting | 2 iterations
-    #     5: Second iteration of 4
-
 
     # # testops:
     #     0: This is sorting by KBest, using all elements evenly split
@@ -93,11 +95,30 @@ for file_value in FILES:
     #     8: This is using Ben's algorithm with random sorting, v3
     #     9: This is using Ben's algorithm with random sorting, v3, second iteration
 
+
+    # # testops:
+
+    #     0: This is sorting by KBest, using all elements evenly split
+    #     1: This is randomly sorting, using all elements evenly split, iteration: 1
+    #     2: This is randomly sorting, using all elements evenly split, iteration: 2
+    #     3: This is randomly sorting, using all elements evenly split, iteration: 3
+    #     4: This is randomly sorting, using all elements evenly split, iteration: 4
+    #     5: This is randomly sorting, using all elements evenly split, iteration: 5
+    #     6: This is randomly sorting, using all elements evenly split, iteration: 6
+    #     7: This is randomly sorting, using all elements evenly split, iteration: 7
+    #     8: This is randomly sorting, using all elements evenly split, iteration: 8
+    #     9: This is randomly sorting, using all elements evenly split, iteration: 9
+    #     10: This is randomly sorting, using all elements evenly split, iteration: 10
+
+
     #   v1: original, just do one round of "does it help?"
-    #   v2: original + remove lowest then redistribute
+    #   v2: original + do k+1, remove lowest then redistribute
     #   v3: v2 + go through and see how many elements we can remove from each. Then redistribute
 
-    for testop in range(10):
+
+
+
+    for testop in range(11):
 
 
         print("\n[[[[ Test iteration: %s ]]]]" % testop)
@@ -108,8 +129,8 @@ for file_value in FILES:
         data_file_nv.flush()
         os.fsync(data_file_nv)
 
-        # For testop 4 and greater, shuffle the order of elements
-        if testop >= 4:
+        # For testop 4 and greater, shuffle the order of column
+        if testop >= 1:
             random.shuffle(yx)
 
         print("\nyx: %s\n" % yx,file=data_file)
@@ -139,10 +160,11 @@ for file_value in FILES:
             os.fsync(data_file_nv)
 
             results = {}
+            results_std = {}
 
             start_time = timeit.default_timer() # Used for run time
 
-            # Loops through all K groupings, starting with 5
+            # Loops through all K groupings, starting with 3
             for K in range(3,MAXK):
                 #print("----%s----" % K)
                 data_file.flush()
@@ -151,16 +173,17 @@ for file_value in FILES:
                 attribute_list={}       # Used to hold column numbers for features to be used for each group
                 remaining = []          # 
                 results[K] = []
+                results_std[K] = []
 
                 # Get attribute list ready for each of the options:
 
-                if testop in {0}:       # We want them all split evenly here
+                if testop in {0,1,2,3,4,5,6,7,8,9,10}:       # We want them all split evenly here
                     for i, value in enumerate(yx):
                         if i%K not in attribute_list:
                             attribute_list[i%K]=[]
                         attribute_list[i%K].append(value[1])
 
-                elif testop in {1,4,5}:     # Here we just want the first set, then the rest put into variable remaining
+                elif testop in {99}:     # Here we just want the first set, then the rest put into variable remaining
                     # Populate attribute_list and remaining
                     for i, value in enumerate(yx):
                         if i%K not in attribute_list:
@@ -211,7 +234,7 @@ for file_value in FILES:
                         seen.append(rem)
                         holding = [-1,0]
 
-                elif testop in {2,6,7}:
+                elif testop in {99}:
                     # Populate attribute_list and remaining
                     for i, value in enumerate(yx):
                         if i%(K+1) not in attribute_list:
@@ -342,7 +365,7 @@ for file_value in FILES:
 
 
 
-                elif testop in {3,8,9}:
+                elif testop in {99}:
                     # Populate attribute_list and remaining
                     for i, value in enumerate(yx):
                         if i%(K+1) not in attribute_list:
@@ -528,7 +551,7 @@ for file_value in FILES:
 
 
 
-                                if diff > -0.005:
+                                if diff > -0.002:
                                     unused2.append(attributes[l])
                                     attributes.pop(l)
                                     looplogic = 1
@@ -580,29 +603,55 @@ for file_value in FILES:
 
                         holding = [-1,0]
 
-                    #print("unused3: %s" % unused3)
-
-
-
-
-
-
-
-
 
                 #print("\nAtt: %s" % (attribute_list))
                 print("Attribute list: %s" % (attribute_list),file=data_file)
                 data_file.flush()
                 os.fsync(data_file)
+
+                # Break dataset into KFOLD number of groups, and test the SVMs against each group
                 for i,val in attribute_list.items():
                     attributes=sorted(val)
                     new_X=[[sample[j] for j in attributes] for sample in X]
-                    model=data_infra.TrainModel(new_X,Y,"SVM_LINEAR",op,n_features)
-                    res = (data_infra.ComputePerf(data_infra.PredictModel(model,new_X),Y))
-                    results[K].append(res['metric'])
-                    TOTALSVMS = TOTALSVMS + 1
 
-                #print(results[K])
+                    temp_acc = []               # Holds results from each fold for later averaging
+
+                    for fn in range(KFOLD):
+                        folds = []              # Fold numbers. I.e., fold 0, 1, etc.
+                        for j in range(KFOLD):  # Build list of folds
+                            folds.append(j)
+                        folds.remove(fn)        # Remove one for testing
+
+                        # Build tuples for training
+                        first = 0
+                        for f in folds:
+                            k_start = int(f * kfold_n_tuples)
+                            k_end = int(k_start + kfold_n_tuples - 1)
+
+                            if (first == 0):    # If it's the first one, just set it equal to the slice
+                                first = 1;
+                                train_x = new_X[k_start:k_end]
+                                train_y = Y[k_start:k_end]
+                            else:               # If it's not the first, append the new slice to the current
+                                train_x = np.concatenate((train_x,new_X[k_start:k_end]))
+                                train_y = np.concatenate((train_y,Y[k_start:k_end]))
+
+                        # Build tuples for testing
+                        k_start = int(fn * kfold_n_tuples)
+                        k_end = int(k_start + kfold_n_tuples - 1)
+                        test_x = new_X[k_start:k_end]
+                        test_y = Y[k_start:k_end]
+
+                        # Train and Test!
+                        model=data_infra.TrainModel(train_x,train_y,"SVM_LINEAR",op,n_features)
+                        res = data_infra.ComputePerf(test_y,data_infra.PredictModel(model,test_x))
+                        temp_acc.append(res['metric'])      # Append result for each FOLD
+                        TOTALSVMS = TOTALSVMS + 1
+
+                    # Append results from the folds
+                    results[K].append(sum(temp_acc) / float(len(temp_acc)))
+                    results_std[K].append(np.std(temp_acc))
+
                 sys.stdout.flush()  # Was needed to get it to actually print
 
             end_time = timeit.default_timer()
@@ -621,21 +670,30 @@ for file_value in FILES:
             os.fsync(data_file)
             for K in range (3,MAXK):
 
-                print("|| (K:%s) Avg: %.5f, StD: %.5f, Max: %.5f, Min: %.5f, Swing: %.5f" % (K,sum(results[K]) / float(len(results[K])),np.std(results[K]),np.amax(results[K]),np.amin(results[K]),np.amax(results[K]) - np.amin(results[K])))
-                print("%s,%.5f,%.5f,%.5f,%.5f,%.5f" % (K,sum(results[K]) / float(len(results[K])),np.std(results[K]),np.amax(results[K]),np.amin(results[K]),np.max(results[K]) - np.amin(results[K])),file=data_file)
+                print("|| (K:%s) Avg: %.5f, StD: %.5f, Max: %.5f, Min: %.5f, Swing: %.5f" % (K,sum(results[K]) / float(len(results[K])),sum(results_std[K]) / float(len(results_std[K])),np.amax(results[K]),np.amin(results[K]),np.amax(results[K]) - np.amin(results[K])))
+                print("%s,%.5f,%.5f,%.5f,%.5f,%.5f" % (K,sum(results[K]) / float(len(results[K])),sum(results_std[K]) / float(len(results_std[K])),np.amax(results[K]),np.amin(results[K]),np.amax(results[K]) - np.amin(results[K])),file=data_file)
                 data_file.flush()
                 os.fsync(data_file)
-                print("%s,%.5f,%.5f,%.5f,%.5f,%.5f" % (K,sum(results[K]) / float(len(results[K])),np.std(results[K]),np.amax(results[K]),np.amin(results[K]),np.max(results[K]) - np.amin(results[K])),file=data_file_nv)
-                data_file.flush()
+                print("%s,%.5f,%.5f,%.5f,%.5f,%.5f" % (K,sum(results[K]) / float(len(results[K])),sum(results_std[K]) / float(len(results_std[K])),np.amax(results[K]),np.amin(results[K]),np.amax(results[K]) - np.amin(results[K])),file=data_file_nv)
+                data_file_nv.flush()
                 os.fsync(data_file)
 
-            print("\n-Detailed Info\n",file=data_file)
+            print("\n-Detailed Info\nIndividual Group Accuracies\n",file=data_file)
             data_file.flush()
-            os.fsync(data_file)
+            os.fsync(data_file_nv)
             for K in range (3,MAXK):
                 print("%s,%s" % (K,results[K]),file=data_file)
                 data_file.flush()
                 os.fsync(data_file)
+
+            print("\nIndividual Group Standard Deviations",file=data_file)
+            data_file.flush()
+            os.fsync(data_file)
+            for K in range (3,MAXK):
+                print("%s,%s" % (K,results_std[K]),file=data_file)
+                data_file_nv.flush()
+                os.fsync(data_file_nv)
+
             print("\nDone in: %s seconds" % (end_time - start_time))
             print("\nDone in: %s seconds\n" % (end_time - start_time),file=data_file)
             data_file.flush()
@@ -655,10 +713,10 @@ for file_value in FILES:
 
     # -------------- END SELECT K BEST --------------
 
-print("\nTotal SVMs: \n" % TOTALSVMS,file=data_file)
+print("\nTotal SVMs: %s\n" % TOTALSVMS,file=data_file)
 data_file.flush()
 os.fsync(data_file)
-print("\nTotal SVMs: \n" % TOTALSVMS,file=data_file_nv)
+print("\nTotal SVMs: %s\n" % TOTALSVMS,file=data_file_nv)
 data_file_nv.flush()
 os.fsync(data_file_nv)
 
